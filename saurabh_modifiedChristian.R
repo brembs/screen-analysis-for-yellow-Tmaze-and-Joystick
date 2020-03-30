@@ -1,11 +1,13 @@
 
+rm(list=ls()) #clean memory
+gc()          #collect garbage
 
 #################################################################### Functions ####################################################
 
 # Check if the light is on or of depending of the hysteresis and the previous trace
 check_switch <- function(trace_point, switch_off, switch_on) {
   
-  if (trace_point == FALSE && switch_on == TRUE) { trace_point <- TRUE}
+  if (trace_point == FALSE && switch_on == TRUE) {trace_point <- TRUE}
   
   if (trace_point == TRUE && switch_off == TRUE) {trace_point <- FALSE}
   
@@ -13,7 +15,7 @@ check_switch <- function(trace_point, switch_off, switch_on) {
 }
 
 # make a vector of light on or of for the trace and hysteresis
-ligth_state <- function(trace, Hysteresis) {
+light_state <- function(trace, Hysteresis) {
   
   switch_on <- (trace > Hysteresis) # potential signals to turn on the light
   switch_off <- (trace < -Hysteresis) # potential switch-off signals
@@ -56,19 +58,19 @@ all_false <- function(thres,trace,window=4800) {
 #setwd("C:/Users/LocalAdmin/Desktop/new_screens/all")
 #setwd("C:/Users/LocalAdmin/Desktop/new_screens/AMANDA/amanda_all")
 #setwd("C:/Users/LocalAdmin/Desktop/new_screens/SAURABH/saurabh_all")
-setwd("C:/Users/LocalAdmin/Desktop/new_screens/mixed/mixed_all")
+setwd("D:/data/optogenetics")
 ########################################## Initialize some parameters  ###########################################
 
 
 #tested_flies <- read.table("C:/Users/LocalAdmin/Desktop/new_screens/all/all.txt", quote="\"", comment.char="")
 #tested_flies <- read.table("C:/Users/LocalAdmin/Desktop/new_screens/AMANDA/amanda_all/amanda_all.txt", quote="\"", comment.char="")
 #tested_flies <- read.table("C:/Users/LocalAdmin/Desktop/new_screens/SAURABH/saurabh_all/saurabh_all.txt", quote="\"", comment.char="")
-tested_flies <- read.table("C:/Users/LocalAdmin/Desktop/new_screens/mixed/mixed_all/mixed_all.txt", quote="\"", comment.char="")
+tested_flies <- read.table("D:/data/optogenetics/optogenetics.txt", quote="\"", comment.char="")
 all_screens <- unique(tested_flies$V2)
 no_of_screens <- length(all_screens)
 skip<-37
 flat_thres <- 0.8
-PI_thres <- 2 #no flies rejected on this basis
+PI_thres <- 1 #nflies rejected if pretest PI=1
 #j <- 0 #initializing the screen number variable
 #x<-0
 on_wiggle1<- NA
@@ -443,9 +445,9 @@ for(j in 1:no_of_screens)
     
     
     # Save in state variable if the light is on or off taking care of hysteresis
-    data$state1 <- ligth_state(data$pos1,Hysteresis)
-    data$state2 <- ligth_state(data$pos2,Hysteresis)
-    data$state3 <- ligth_state(data$pos3,Hysteresis)
+    data$state1 <- light_state(data$pos1,Hysteresis)
+    data$state2 <- light_state(data$pos2,Hysteresis)
+    data$state3 <- light_state(data$pos3,Hysteresis)
     
     # Change the ON or OFF state if the platform were set to reinforce left
     if(right_platform1==FALSE){ data$state1 <- !data$state1}
@@ -550,18 +552,18 @@ for(j in 1:no_of_screens)
     effectsize2 <- mean(PI_platform2[c(3,4,7,8)])-mean(PI_platform2[1:2])
     effectsize3 <- mean(PI_platform3[c(3,4,7,8)])-mean(PI_platform3[1:2])
     
-    just_reinf1 <- mean(PI_platform1[c(3,4,7,8)])
-    just_reinf2 <- mean(PI_platform2[c(3,4,7,8)])
-    just_reinf3 <- mean(PI_platform3[c(3,4,7,8)])
+    just_reinf1 <- mean(PI_platform1[c(2,3,4,5,6,7,8,9)])
+    just_reinf2 <- mean(PI_platform2[c(2,3,4,5,6,7,8,9)])
+    just_reinf3 <- mean(PI_platform3[c(2,3,4,5,6,7,8,9)])
     
     # Condition 3: Tally light encounters in the first training period
-    light_encounter1 <- sum(abs(diff(data$state1[(lengthExp/5):((lengthExp*2)/5)])))
-    light_encounter2 <- sum(abs(diff(data$state2[(lengthExp/5):((lengthExp*2)/5)])))
-    light_encounter3 <- sum(abs(diff(data$state3[(lengthExp/5):((lengthExp*2)/5)])))
+    light_encounter1 <- sum(abs(diff(data$state1[(lengthExp/10):((lengthExp*2)/10)])))
+    light_encounter2 <- sum(abs(diff(data$state2[(lengthExp/10):((lengthExp*2)/10)])))
+    light_encounter3 <- sum(abs(diff(data$state3[(lengthExp/10):((lengthExp*2)/10)])))
     
     
     
-    if(keep1 && abs(mean(PI_platform1[1:2]))<PI_thres & light_encounter1>2){
+    if(keep1 && abs(PI_platform1[1])<PI_thres & light_encounter1>1){
       count<-count+1
       #pos <- pos + data$pos1
       PI_platform[((3*i)-2),] <- PI_platform1
@@ -572,7 +574,7 @@ for(j in 1:no_of_screens)
       off_wiggle[((3*i)-2)] <- off_wiggle1
     }
     
-    if(keep2 && abs(mean(PI_platform2[1:2]))<PI_thres & light_encounter2>2){
+    if(keep2 && abs(PI_platform2[1])<PI_thres & light_encounter2>1){
       count<-count+1
       #pos <- pos + data$pos2
       PI_platform[((3*i)-1),] <- PI_platform2
@@ -583,7 +585,7 @@ for(j in 1:no_of_screens)
       off_wiggle[((3*i)-1)] <- off_wiggle2
     }
     
-    if(keep3 && abs(mean(PI_platform3[1:2]))<PI_thres & light_encounter3>2){
+    if(keep3 && abs(PI_platform3[1])<PI_thres & light_encounter3>1){
       count<-count+1
       #pos <- pos + data$pos3
       PI_platform[((3*i)),] <- PI_platform3
@@ -629,7 +631,7 @@ for(j in 1:no_of_screens)
   #ggplot
   
   # Boxplot of the PIs
-  boxplot(PI_platform, col="grey",xlab="",ylab="PI",main=group_name, ylim = c(-1, 1),names=c("Pretest","Pretest","Training","Training","Test","Test","Training","Training","Test","Test"), cex.lab=1.5, cex.axis = 1.2)
+  boxplot(PI_platform, col="grey",xlab="",ylab="PI",main=group_name, ylim = c(-1, 1),names=c("Pretest","Training","Training","Training","Training","Training","Training","Training","Training","Test"), cex.lab=1.5, cex.axis = 1.2)
   abline(h = 0, untf = FALSE, col="black",lwd=3)
   group <- NULL
   for(s in 1:10){
